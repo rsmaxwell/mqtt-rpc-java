@@ -9,7 +9,7 @@ import org.eclipse.paho.mqttv5.common.MqttMessage;
 import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rsmaxwell.diary.request.handlers.RequestHandler;
+import com.rsmaxwell.diary.response.handler.RequestHandler;
 import com.rsmaxwell.diary.utils.Adapter;
 import com.rsmaxwell.diary.utils.Request;
 import com.rsmaxwell.diary.utils.Utilities;

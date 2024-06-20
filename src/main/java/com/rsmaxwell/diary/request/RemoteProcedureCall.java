@@ -1,74 +1,104 @@
 package com.rsmaxwell.diary.request;
 
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
+import java.util.WeakHashMap;
 
-import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
-import org.eclipse.paho.mqttv5.client.MqttClientPersistence;
-import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
-import org.eclipse.paho.mqttv5.client.persist.MqttDefaultFilePersistence;
+import org.eclipse.paho.mqttv5.client.MqttCallback;
+import org.eclipse.paho.mqttv5.common.MqttException;
 import org.eclipse.paho.mqttv5.common.MqttMessage;
 import org.eclipse.paho.mqttv5.common.MqttSubscription;
 import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rsmaxwell.diary.request.handlers.RequestResponse;
-import com.rsmaxwell.diary.response.ClientConfig;
+import com.rsmaxwell.diary.utils.Adapter;
+import com.rsmaxwell.diary.utils.Token;
 
 public class RemoteProcedureCall {
 
+	static int qos = 0;
 	static String clientID = "requester";
+	static WeakHashMap<String, MqttMessage> replies = new WeakHashMap<>();
+	static WeakHashMap<String, Token> tokens = new WeakHashMap<>();
+	static private ObjectMapper mapper = new ObjectMapper();
 
-	private ObjectMapper mapper = new ObjectMapper();
-	private ClientConfig config;
+	private HandlerOptions options;
 
-	public RemoteProcedureCall(ClientConfig value) {
-		config = value;
-		config.connOpts.setCleanStart(true);
+	public RemoteProcedureCall(HandlerOptions options) throws MqttException {
+		this.options = options;
 	}
 
-	public void performRequest(RequestResponse handler) throws Exception {
+	// Subscribe to the response topic
+	public void subscribe() throws Exception {
+		String responseTopic = String.format(options.responseTopicFormat, options.clientID);
+		MqttSubscription subscription = new MqttSubscription(responseTopic);
+		System.out.printf("subscribing to: %s\n", responseTopic);
+		options.client.subscribe(subscription).waitForCompletion();
+	}
 
-		String broker = config.serverUrls.get(0);
-		MqttClientPersistence persistence = new MqttDefaultFilePersistence();
-		String replyTopic = String.format("response/%s", clientID);
-		int qos = 0;
+	public Token request(PublishOptions publishOptions) throws Exception {
 
-		MqttAsyncClient client = new MqttAsyncClient(broker, clientID, persistence);
-		MqttConnectionOptions connOpts = config.connOpts;
+		Token token = new Token();
+		String correlID = token.getID();
 
-		client.setCallback(handler);
-
-		// Connect
-		System.out.printf(String.format("Connecting to broker: %s as '%s'\n", broker, clientID));
-		client.connect(connOpts).waitForCompletion();
-		System.out.printf("Client %s connected\n", clientID);
-
-		// Subscribe to the reply topic
-		MqttSubscription subscription = new MqttSubscription(replyTopic);
-		System.out.println("subscribing to: " + replyTopic);
-		client.subscribe(subscription).waitForCompletion();
-
-		// Publish the request to the request topic
-		byte[] content = mapper.writeValueAsBytes(handler.getRequest());
-		MqttMessage message = new MqttMessage(content);
+		MqttMessage message = new MqttMessage(publishOptions.request);
 		MqttProperties properties = new MqttProperties();
-		properties.setResponseTopic(replyTopic);
-		properties.setCorrelationData(UUID.randomUUID().toString().getBytes());
+		properties.setResponseTopic(options.responseTopicFormat);
+		properties.setCorrelationData(correlID.getBytes());
 		message.setProperties(properties);
 		message.setQos(qos);
 		message.setRetained(false);
 
-		System.out.printf(String.format("Publishing: %s to topic: %s with qos: %d\n", new String(content), config.rpcRequestTopic, qos));
-		System.out.printf(String.format("    replyTopic: %s\n", replyTopic));
-		client.publish(config.rpcRequestTopic, message).waitForCompletion();
+		System.out.printf(String.format("Publishing: %s to topic: %s with qos: %d\n", new String(publishOptions.request), publishOptions.topic, qos));
+		System.out.printf(String.format("    replyTopic: %s\n", options.responseTopicFormat));
+		options.client.publish(publishOptions.topic, message).waitForCompletion();
 		System.out.println("Message published");
 
-		System.out.printf("Wait for the reply to arrive\n");
-		TimeUnit.SECONDS.sleep(5);
+		tokens.put(correlID, token);
+		return token;
+	}
 
-		// Disconnect
-		client.disconnect();
-		System.out.printf("Client %s disconnected\n", clientID);
+	public MqttCallback getAdapter() {
+		Adapter adapter = new Adapter() {
+
+			@Override
+			public void messageArrived(String topic, MqttMessage reply) throws Exception {
+				System.out.println("RemoteProcedureCall.Adapter.messageArrived");
+
+				MqttProperties properties = reply.getProperties();
+				byte[] corrationData = properties.getCorrelationData();
+				String correlID = new String(corrationData);
+
+				System.out.printf("correlID: %s\n", correlID);
+
+				Token token = tokens.get(correlID);
+				if (token == null) {
+					System.out.printf("Discarding reply because token is null\n");
+					return;
+				}
+
+				replies.put(correlID, reply);
+				token.messageArrived();
+			}
+		};
+
+		return adapter;
+	}
+
+	public Map<String, Object> waitForResponse(Token token) throws Exception {
+
+		token.waitForResponse();
+
+		String correlID = token.getID();
+		MqttMessage reply = replies.get(correlID);
+
+		byte[] payload = reply.getPayload();
+
+		// @formatter:off
+		TypeReference<Map<String, Object>> ref = new TypeReference<>() {};
+		Map<String, Object> response = mapper.readValue(payload, ref);
+		// @formatter:on
+
+		return response;
 	}
 }

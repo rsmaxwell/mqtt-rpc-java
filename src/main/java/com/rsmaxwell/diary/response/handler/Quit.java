@@ -2,7 +2,6 @@ package com.rsmaxwell.diary.response.handler;
 
 import java.util.Map;
 
-import com.rsmaxwell.diary.request.handlers.RequestHandler;
 import com.rsmaxwell.diary.utils.Utilities;
 
 public class Quit implements RequestHandler {

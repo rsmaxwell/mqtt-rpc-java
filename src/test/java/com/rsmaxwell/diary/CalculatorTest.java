@@ -1,24 +1,35 @@
-package com.rsmaxwell.diary.request;
+package com.rsmaxwell.diary;
+
+import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
+import org.eclipse.paho.mqttv5.client.MqttClientPersistence;
+import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
+import org.eclipse.paho.mqttv5.client.persist.MqttDefaultFilePersistence;
 
-import com.rsmaxwell.diary.request.handlers.CalculatorHandler;
-import com.rsmaxwell.diary.request.handlers.RequestResponse;
-import com.rsmaxwell.diary.response.ClientConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rsmaxwell.diary.request.HandlerOptions;
+import com.rsmaxwell.diary.request.PublishOptions;
+import com.rsmaxwell.diary.request.RemoteProcedureCall;
+import com.rsmaxwell.diary.request.requests.Calculator;
+import com.rsmaxwell.diary.request.requests.RpcRequest;
+import com.rsmaxwell.diary.utils.Token;
 
-public class Calculator {
+public class CalculatorTest {
 
 	static int qos = 0;
 	static volatile boolean keepRunning = true;
 
+	static private ObjectMapper mapper = new ObjectMapper();
+
 	public static void main(String[] args) throws Exception {
 
 		Option serverOption = createOption("s", "server", "mqtt server", "URL of MQTT server", false);
-		Option topicOption = createOption("t", "requestTopic", "request topic", "topic name for requests", false);
 		Option usernameOption = createOption("u", "username", "Username", "Username for the MQTT server", true);
 		Option passwordOption = createOption("p", "password", "Password", "Password for the MQTT server", true);
 		Option operationOption = createOption("o", "operation", "Operation", "Operation ( mul/add/sub/div )", true);
@@ -28,7 +39,6 @@ public class Calculator {
 		// @formatter:off
 		Options options = new Options();
 		options.addOption(serverOption)
-			   .addOption(topicOption)
 			   .addOption(usernameOption)
 			   .addOption(passwordOption)
 			   .addOption(operationOption)
@@ -39,7 +49,6 @@ public class Calculator {
 		CommandLineParser commandLineParser = new DefaultParser();
 		CommandLine commandLine = commandLineParser.parse(options, args);
 		String server = commandLine.hasOption("h") ? commandLine.getOptionValue(serverOption) : "tcp://127.0.0.1:1883";
-		String topic = commandLine.hasOption("t") ? commandLine.getOptionValue(topicOption) : "request";
 		String username = commandLine.getOptionValue(usernameOption);
 		String password = commandLine.getOptionValue(passwordOption);
 		String operation = commandLine.getOptionValue(operationOption);
@@ -49,12 +58,39 @@ public class Calculator {
 		int param1 = Integer.parseInt(A);
 		int param2 = Integer.parseInt(B);
 
-		ClientConfig config = new ClientConfig(server, topic, username, password);
+		String clientID = "requester";
+		String requestTopic = "request";
+		int qos = 0;
 
-		RemoteProcedureCall rpc = new RemoteProcedureCall(config);
-		RequestResponse handler = new CalculatorHandler(operation, param1, param2);
+		MqttClientPersistence persistence = new MqttDefaultFilePersistence();
+		MqttAsyncClient client = new MqttAsyncClient(server, clientID, persistence);
+		MqttConnectionOptions connOpts = new MqttConnectionOptions();
+		connOpts.setUserName(username);
+		connOpts.setPassword(password.getBytes());
 
-		rpc.performRequest(handler);
+		HandlerOptions handlerOptions = new HandlerOptions(client, "response/%s", clientID);
+		RemoteProcedureCall rpc = new RemoteProcedureCall(handlerOptions);
+		client.setCallback(rpc.getAdapter());
+
+		// Connect
+		System.out.printf("Connecting to broker: %s as '%s'\n", server, clientID);
+		client.connect(connOpts).waitForCompletion();
+		System.out.printf("Client %s connected\n", clientID);
+
+		// Subscribe to the responseTopic
+		rpc.subscribe();
+
+		RpcRequest handler = new Calculator(operation, param1, param2);
+		byte[] request = mapper.writeValueAsBytes(handler.getRequest());
+		Token token = rpc.request(new PublishOptions(requestTopic, request));
+
+		// Wait for the response to arrive
+		Map<String, Object> response = rpc.waitForResponse(token);
+		handler.handle(response);
+
+		// Disconnect
+		client.disconnect();
+		System.out.printf("Client %s disconnected\n", clientID);
 
 		System.out.println("exiting");
 	}

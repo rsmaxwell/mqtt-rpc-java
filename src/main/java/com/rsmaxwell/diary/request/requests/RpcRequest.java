@@ -1,4 +1,4 @@
-package com.rsmaxwell.diary.request.handlers;
+package com.rsmaxwell.diary.request.requests;
 
 import java.net.HttpURLConnection;
 import java.util.Map;
@@ -7,13 +7,13 @@ import org.eclipse.paho.mqttv5.common.MqttMessage;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rsmaxwell.diary.utils.Adapter;
 import com.rsmaxwell.diary.utils.Request;
 import com.rsmaxwell.diary.utils.Utilities;
 
-public abstract class RequestResponse extends Adapter {
+public abstract class RpcRequest {
 
 	Request request;
+
 	private ObjectMapper mapper = new ObjectMapper();
 
 	public void setRequest(Request request) {
@@ -51,4 +51,6 @@ public abstract class RequestResponse extends Adapter {
 
 		return reply;
 	}
+
+	public abstract void handle(Map<String, Object> replyMessage) throws Exception;
 }

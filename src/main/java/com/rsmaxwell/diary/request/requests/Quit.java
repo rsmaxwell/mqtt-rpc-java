@@ -1,25 +1,19 @@
-package com.rsmaxwell.diary.request.handlers;
+package com.rsmaxwell.diary.request.requests;
 
 import java.util.Map;
-
-import org.eclipse.paho.mqttv5.common.MqttMessage;
 
 import com.rsmaxwell.diary.utils.Request;
 import com.rsmaxwell.diary.utils.Utilities;
 
-public class QuitHandler extends RequestResponse {
+public class Quit extends RpcRequest {
 
-	public QuitHandler() {
+	public Quit() {
 		request = new Request("quit");
 		setRequest(request);
 	}
 
 	@Override
-	public void messageArrived(String topic, MqttMessage replyMessage) throws Exception {
-		System.out.println("Quit.messageArrived");
-
-		Map<String, Object> reply = checkReply(topic, replyMessage);
-
+	public void handle(Map<String, Object> reply) throws Exception {
 		String result = Utilities.getStringFromMap("result", reply);
 		System.out.printf("result: %s\n", result);
 	}
