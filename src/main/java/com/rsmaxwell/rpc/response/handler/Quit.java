@@ -2,12 +2,12 @@ package com.rsmaxwell.rpc.response.handler;
 
 import java.util.Map;
 
-import com.rsmaxwell.rpc.utils.Utilities;
+import com.rsmaxwell.rpc.utils.Response;
 
-public class Quit implements RequestHandler {
+public class Quit extends RequestHandler {
 
-	public Map<String, Object> handleRequest(Map<String, Object> args) throws Exception {
+	public Response handleRequest(Map<String, Object> args) throws Exception {
 		System.out.println("quit.handleRequest");
-		return Utilities.quit();
+		return quit();
 	}
 }

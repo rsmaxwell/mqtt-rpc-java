@@ -2,12 +2,12 @@ package com.rsmaxwell.rpc.response.handler;
 
 import java.util.Map;
 
-import com.rsmaxwell.rpc.utils.Utilities;
+import com.rsmaxwell.rpc.utils.Response;
 
-public class GetPages implements RequestHandler {
+public class GetPages extends RequestHandler {
 
-	public Map<String, Object> handleRequest(Map<String, Object> args) throws Exception {
-		System.out.println("getPages: handle");
-		return Utilities.success("[ 'one', 'two', 'three' ]");
+	public Response handleRequest(Map<String, Object> args) throws Exception {
+		System.out.println("getPages: handleRequest");
+		return success("[ 'one', 'two', 'three' ]");
 	}
 }

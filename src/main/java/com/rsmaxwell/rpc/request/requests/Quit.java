@@ -1,8 +1,7 @@
 package com.rsmaxwell.rpc.request.requests;
 
-import java.util.Map;
-
 import com.rsmaxwell.rpc.utils.Request;
+import com.rsmaxwell.rpc.utils.Response;
 
 public class Quit extends RpcRequest {
 
@@ -12,7 +11,7 @@ public class Quit extends RpcRequest {
 	}
 
 	@Override
-	public void handle(Map<String, Object> reply) throws Exception {
+	public void handle(Response response) throws Exception {
 		System.out.println("Quit.handle");
 	}
 }

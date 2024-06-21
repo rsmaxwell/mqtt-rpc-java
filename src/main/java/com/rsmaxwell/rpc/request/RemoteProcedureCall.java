@@ -1,6 +1,5 @@
 package com.rsmaxwell.rpc.request;
 
-import java.util.Map;
 import java.util.WeakHashMap;
 
 import org.eclipse.paho.mqttv5.client.MqttCallback;
@@ -9,9 +8,9 @@ import org.eclipse.paho.mqttv5.common.MqttMessage;
 import org.eclipse.paho.mqttv5.common.MqttSubscription;
 import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rsmaxwell.rpc.utils.Adapter;
+import com.rsmaxwell.rpc.utils.Response;
 import com.rsmaxwell.rpc.utils.Token;
 
 public class RemoteProcedureCall {
@@ -85,7 +84,7 @@ public class RemoteProcedureCall {
 		return adapter;
 	}
 
-	public Map<String, Object> waitForResponse(Token token) throws Exception {
+	public Response waitForResponse(Token token) throws Exception {
 
 		token.waitForCompletion();
 
@@ -93,12 +92,6 @@ public class RemoteProcedureCall {
 		MqttMessage reply = replies.get(correlID);
 
 		byte[] payload = reply.getPayload();
-
-		// @formatter:off
-		TypeReference<Map<String, Object>> ref = new TypeReference<>() {};
-		Map<String, Object> response = mapper.readValue(payload, ref);
-		// @formatter:on
-
-		return response;
+		return mapper.readValue(payload, Response.class);
 	}
 }

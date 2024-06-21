@@ -1,7 +1,6 @@
 package com.rsmaxwell.rpc.response;
 
 import java.util.HashMap;
-import java.util.Map;
 
 import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
 import org.eclipse.paho.mqttv5.client.MqttCallback;
@@ -12,8 +11,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rsmaxwell.rpc.response.handler.RequestHandler;
 import com.rsmaxwell.rpc.utils.Adapter;
 import com.rsmaxwell.rpc.utils.Request;
+import com.rsmaxwell.rpc.utils.Response;
 import com.rsmaxwell.rpc.utils.Token;
-import com.rsmaxwell.rpc.utils.Utilities;
 
 public class MessageHandler extends Adapter implements MqttCallback {
 
@@ -94,9 +93,9 @@ public class MessageHandler extends Adapter implements MqttCallback {
 				return;
 			}
 
-			Map<String, Object> result = null;
+			Response result = null;
 			try {
-				result = handler.handleRequest(request.args);
+				result = handler.handleRequest(request.getArgs());
 			} catch (Exception e) {
 				e.printStackTrace();
 				System.out.println("discarding message because the message could not be handled");
@@ -137,9 +136,9 @@ public class MessageHandler extends Adapter implements MqttCallback {
 			client.publish(responseTopic, responseMessage).waitForCompletion();
 			System.out.println(String.format("publish complete"));
 
-			boolean found = Utilities.isPresent("keepRunning", result);
+			boolean found = Response.isPresent("keepRunning", result);
 			if (found) {
-				boolean value = Utilities.getBooleanFromMap("keepRunning", result);
+				boolean value = Response.getBooleanFromMap("keepRunning", result);
 				if (value == false) {
 					System.out.println("quitting");
 					keepRunning.completed();

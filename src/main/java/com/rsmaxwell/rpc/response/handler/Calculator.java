@@ -2,18 +2,18 @@ package com.rsmaxwell.rpc.response.handler;
 
 import java.util.Map;
 
-import com.rsmaxwell.rpc.utils.Utilities;
+import com.rsmaxwell.rpc.utils.Response;
 
-public class Calculator implements RequestHandler {
+public class Calculator extends RequestHandler {
 
 	@Override
-	public Map<String, Object> handleRequest(Map<String, Object> args) throws Exception {
+	public Response handleRequest(Map<String, Object> args) throws Exception {
 		System.out.println("calculator.handleRequest");
 
 		try {
-			String operation = Utilities.getStringFromMap("operation", args);
-			int param1 = Utilities.getIntegerFromMap("param1", args);
-			int param2 = Utilities.getIntegerFromMap("param2", args);
+			String operation = Response.getStringFromMap("operation", args);
+			int param1 = Response.getIntegerFromMap("param1", args);
+			int param2 = Response.getIntegerFromMap("param2", args);
 
 			int value = 0;
 
@@ -28,10 +28,10 @@ public class Calculator implements RequestHandler {
 				value = param1 - param2;
 			}
 
-			return Utilities.success(value);
+			return success(value);
 		} catch (Exception e) {
 
-			return Utilities.badRequest(e.getMessage());
+			return badRequest(e.getMessage());
 		}
 	}
 }

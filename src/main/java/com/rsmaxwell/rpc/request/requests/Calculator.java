@@ -1,9 +1,7 @@
 package com.rsmaxwell.rpc.request.requests;
 
-import java.util.Map;
-
 import com.rsmaxwell.rpc.utils.Request;
-import com.rsmaxwell.rpc.utils.Utilities;
+import com.rsmaxwell.rpc.utils.Response;
 
 public class Calculator extends RpcRequest {
 
@@ -16,8 +14,8 @@ public class Calculator extends RpcRequest {
 	}
 
 	@Override
-	public void handle(Map<String, Object> reply) throws Exception {
-		int result = Utilities.getIntegerFromMap("result", reply);
+	public void handle(Response response) throws Exception {
+		int result = Response.getIntegerFromMap("result", response);
 		System.out.printf("result: %d\n", result);
 	}
 }

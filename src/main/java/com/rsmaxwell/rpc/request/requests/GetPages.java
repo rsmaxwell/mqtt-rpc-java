@@ -1,9 +1,7 @@
 package com.rsmaxwell.rpc.request.requests;
 
-import java.util.Map;
-
 import com.rsmaxwell.rpc.utils.Request;
-import com.rsmaxwell.rpc.utils.Utilities;
+import com.rsmaxwell.rpc.utils.Response;
 
 public class GetPages extends RpcRequest {
 
@@ -13,8 +11,8 @@ public class GetPages extends RpcRequest {
 	}
 
 	@Override
-	public void handle(Map<String, Object> reply) throws Exception {
-		String result = Utilities.getStringFromMap("result", reply);
+	public void handle(Response response) throws Exception {
+		String result = Response.getStringFromMap("result", response);
 		System.out.printf("result: %s\n", result);
 	}
 }

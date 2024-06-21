@@ -8,7 +8,7 @@ import org.eclipse.paho.mqttv5.common.MqttMessage;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rsmaxwell.rpc.utils.Request;
-import com.rsmaxwell.rpc.utils.Utilities;
+import com.rsmaxwell.rpc.utils.Response;
 
 public abstract class RpcRequest {
 
@@ -39,9 +39,9 @@ public abstract class RpcRequest {
 			throw new Exception("discarding message because decoded message was null");
 		}
 
-		int code = Utilities.getIntegerFromMap("code", reply);
+		int code = Response.getIntegerFromMap("code", reply);
 		if (code != HttpURLConnection.HTTP_OK) {
-			String message = Utilities.getStringFromMap("message", reply);
+			String message = Response.getStringFromMap("message", reply);
 			if (message == null) {
 				throw new Exception(String.format("code: %d\n", code));
 			} else {
@@ -52,5 +52,5 @@ public abstract class RpcRequest {
 		return reply;
 	}
 
-	public abstract void handle(Map<String, Object> replyMessage) throws Exception;
+	public abstract void handle(Response response) throws Exception;
 }

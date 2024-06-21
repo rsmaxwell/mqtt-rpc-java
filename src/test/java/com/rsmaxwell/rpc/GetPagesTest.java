@@ -1,7 +1,5 @@
 package com.rsmaxwell.rpc;
 
-import java.util.Map;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -18,6 +16,7 @@ import com.rsmaxwell.rpc.request.PublishOptions;
 import com.rsmaxwell.rpc.request.RemoteProcedureCall;
 import com.rsmaxwell.rpc.request.requests.GetPages;
 import com.rsmaxwell.rpc.request.requests.RpcRequest;
+import com.rsmaxwell.rpc.utils.Response;
 import com.rsmaxwell.rpc.utils.Token;
 
 public class GetPagesTest {
@@ -74,7 +73,7 @@ public class GetPagesTest {
 		Token token = rpc.request(publishOptions);
 
 		// Wait for the response to arrive
-		Map<String, Object> response = rpc.waitForResponse(token);
+		Response response = rpc.waitForResponse(token);
 		handler.handle(response);
 
 		// Disconnect
