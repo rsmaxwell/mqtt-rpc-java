@@ -1,8 +1,8 @@
-package com.rsmaxwell.diary.response.handler;
+package com.rsmaxwell.rpc.response.handler;
 
 import java.util.Map;
 
-import com.rsmaxwell.diary.utils.Utilities;
+import com.rsmaxwell.rpc.utils.Utilities;
 
 public class Calculator implements RequestHandler {
 

@@ -1,9 +1,9 @@
-package com.rsmaxwell.diary.request.requests;
+package com.rsmaxwell.rpc.request.requests;
 
 import java.util.Map;
 
-import com.rsmaxwell.diary.utils.Request;
-import com.rsmaxwell.diary.utils.Utilities;
+import com.rsmaxwell.rpc.utils.Request;
+import com.rsmaxwell.rpc.utils.Utilities;
 
 public class Calculator extends RpcRequest {
 

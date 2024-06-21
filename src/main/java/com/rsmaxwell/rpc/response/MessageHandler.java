@@ -1,4 +1,4 @@
-package com.rsmaxwell.diary.response;
+package com.rsmaxwell.rpc.response;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,17 +9,19 @@ import org.eclipse.paho.mqttv5.common.MqttMessage;
 import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rsmaxwell.diary.response.handler.RequestHandler;
-import com.rsmaxwell.diary.utils.Adapter;
-import com.rsmaxwell.diary.utils.Request;
-import com.rsmaxwell.diary.utils.Utilities;
+import com.rsmaxwell.rpc.response.handler.RequestHandler;
+import com.rsmaxwell.rpc.utils.Adapter;
+import com.rsmaxwell.rpc.utils.Request;
+import com.rsmaxwell.rpc.utils.Token;
+import com.rsmaxwell.rpc.utils.Utilities;
 
 public class MessageHandler extends Adapter implements MqttCallback {
 
 	private MqttAsyncClient client;
 	private HashMap<String, RequestHandler> handlers;
 	private ObjectMapper mapper = new ObjectMapper();
-	private boolean keepRunning = true;
+
+	private Token keepRunning = new Token();
 
 	public MessageHandler(HashMap<String, RequestHandler> handlers) {
 		this.handlers = handlers;
@@ -107,17 +109,6 @@ public class MessageHandler extends Adapter implements MqttCallback {
 			}
 
 			System.out.println("result: " + result.toString());
-
-			boolean found = Utilities.isPresent("keepRunning", result);
-			if (found) {
-				boolean value = Utilities.getBooleanFromMap("keepRunning", result);
-				if (value == false) {
-					System.out.println("quitting");
-					keepRunning = false;
-					return;
-				}
-			}
-
 			System.out.println("encoding result");
 			byte[] response = null;
 			try {
@@ -144,13 +135,23 @@ public class MessageHandler extends Adapter implements MqttCallback {
 
 			System.out.printf(String.format("Publishing: %s to topic: %s with qos: %d\n", new String(response), responseTopic, qos));
 			client.publish(responseTopic, responseMessage).waitForCompletion();
-			System.out.println(String.format("publish complete\n"));
+			System.out.println(String.format("publish complete"));
+
+			boolean found = Utilities.isPresent("keepRunning", result);
+			if (found) {
+				boolean value = Utilities.getBooleanFromMap("keepRunning", result);
+				if (value == false) {
+					System.out.println("quitting");
+					keepRunning.completed();
+					return;
+				}
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	public boolean keepRunning() {
-		return keepRunning;
+	public void waitForCompletion() throws InterruptedException {
+		keepRunning.waitForCompletion();
 	}
 }

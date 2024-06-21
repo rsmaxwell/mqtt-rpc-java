@@ -1,4 +1,4 @@
-package com.rsmaxwell.diary.request;
+package com.rsmaxwell.rpc.request;
 
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -11,8 +11,8 @@ import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rsmaxwell.diary.utils.Adapter;
-import com.rsmaxwell.diary.utils.Token;
+import com.rsmaxwell.rpc.utils.Adapter;
+import com.rsmaxwell.rpc.utils.Token;
 
 public class RemoteProcedureCall {
 
@@ -78,7 +78,7 @@ public class RemoteProcedureCall {
 				}
 
 				replies.put(correlID, reply);
-				token.messageArrived();
+				token.completed();
 			}
 		};
 
@@ -87,7 +87,7 @@ public class RemoteProcedureCall {
 
 	public Map<String, Object> waitForResponse(Token token) throws Exception {
 
-		token.waitForResponse();
+		token.waitForCompletion();
 
 		String correlID = token.getID();
 		MqttMessage reply = replies.get(correlID);

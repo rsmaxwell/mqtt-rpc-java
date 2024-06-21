@@ -1,4 +1,4 @@
-package com.rsmaxwell.diary.utils;
+package com.rsmaxwell.rpc.utils;
 
 import java.util.HashMap;
 import java.util.Map;

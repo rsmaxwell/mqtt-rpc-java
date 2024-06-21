@@ -1,4 +1,4 @@
-package com.rsmaxwell.diary;
+package com.rsmaxwell.rpc;
 
 import java.util.Map;
 
@@ -13,14 +13,14 @@ import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
 import org.eclipse.paho.mqttv5.client.persist.MqttDefaultFilePersistence;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rsmaxwell.diary.request.HandlerOptions;
-import com.rsmaxwell.diary.request.PublishOptions;
-import com.rsmaxwell.diary.request.RemoteProcedureCall;
-import com.rsmaxwell.diary.request.requests.Quit;
-import com.rsmaxwell.diary.request.requests.RpcRequest;
-import com.rsmaxwell.diary.utils.Token;
+import com.rsmaxwell.rpc.request.HandlerOptions;
+import com.rsmaxwell.rpc.request.PublishOptions;
+import com.rsmaxwell.rpc.request.RemoteProcedureCall;
+import com.rsmaxwell.rpc.request.requests.GetPages;
+import com.rsmaxwell.rpc.request.requests.RpcRequest;
+import com.rsmaxwell.rpc.utils.Token;
 
-public class QuitTest {
+public class GetPagesTest {
 
 	static int qos = 0;
 	static volatile boolean keepRunning = true;
@@ -48,7 +48,6 @@ public class QuitTest {
 
 		String clientID = "requester";
 		String requestTopic = "request";
-		int qos = 0;
 
 		MqttClientPersistence persistence = new MqttDefaultFilePersistence();
 		MqttAsyncClient client = new MqttAsyncClient(server, clientID, persistence);
@@ -57,9 +56,9 @@ public class QuitTest {
 		connOpts.setPassword(password.getBytes());
 
 		HandlerOptions handlerOptions = new HandlerOptions(client, "response/%s", clientID);
-		RemoteProcedureCall h = new RemoteProcedureCall(handlerOptions);
+		RemoteProcedureCall rpc = new RemoteProcedureCall(handlerOptions);
 
-		client.setCallback(h.getAdapter());
+		client.setCallback(rpc.getAdapter());
 
 		// Connect
 		System.out.printf("Connecting to broker: %s as '%s'\n", server, clientID);
@@ -67,15 +66,15 @@ public class QuitTest {
 		System.out.printf("Client %s connected\n", clientID);
 
 		// Subscribe to the responseTopic
-		h.subscribe();
+		rpc.subscribe();
 
-		RpcRequest handler = new Quit();
+		RpcRequest handler = new GetPages();
 		byte[] request = mapper.writeValueAsBytes(handler.getRequest());
 		PublishOptions publishOptions = new PublishOptions(requestTopic, request);
-		Token token = h.request(publishOptions);
+		Token token = rpc.request(publishOptions);
 
 		// Wait for the response to arrive
-		Map<String, Object> response = h.waitForResponse(token);
+		Map<String, Object> response = rpc.waitForResponse(token);
 		handler.handle(response);
 
 		// Disconnect

@@ -1,4 +1,4 @@
-package com.rsmaxwell.diary;
+package com.rsmaxwell.rpc;
 
 import java.util.Map;
 
@@ -13,14 +13,14 @@ import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
 import org.eclipse.paho.mqttv5.client.persist.MqttDefaultFilePersistence;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rsmaxwell.diary.request.HandlerOptions;
-import com.rsmaxwell.diary.request.PublishOptions;
-import com.rsmaxwell.diary.request.RemoteProcedureCall;
-import com.rsmaxwell.diary.request.requests.GetPages;
-import com.rsmaxwell.diary.request.requests.RpcRequest;
-import com.rsmaxwell.diary.utils.Token;
+import com.rsmaxwell.rpc.request.HandlerOptions;
+import com.rsmaxwell.rpc.request.PublishOptions;
+import com.rsmaxwell.rpc.request.RemoteProcedureCall;
+import com.rsmaxwell.rpc.request.requests.Calculator;
+import com.rsmaxwell.rpc.request.requests.RpcRequest;
+import com.rsmaxwell.rpc.utils.Token;
 
-public class GetPagesTest {
+public class CalculatorTest {
 
 	static int qos = 0;
 	static volatile boolean keepRunning = true;
@@ -32,12 +32,18 @@ public class GetPagesTest {
 		Option serverOption = createOption("s", "server", "mqtt server", "URL of MQTT server", false);
 		Option usernameOption = createOption("u", "username", "Username", "Username for the MQTT server", true);
 		Option passwordOption = createOption("p", "password", "Password", "Password for the MQTT server", true);
+		Option operationOption = createOption("o", "operation", "Operation", "Operation ( mul/add/sub/div )", true);
+		Option param1Option = createOption("a", "param1", "Param1", "Parameter 1", true);
+		Option param2Option = createOption("b", "param2", "Param2", "Parameter 2", true);
 
 		// @formatter:off
 		Options options = new Options();
 		options.addOption(serverOption)
 			   .addOption(usernameOption)
-			   .addOption(passwordOption);
+			   .addOption(passwordOption)
+			   .addOption(operationOption)
+			   .addOption(param1Option)
+			   .addOption(param2Option);
 		// @formatter:on
 
 		CommandLineParser commandLineParser = new DefaultParser();
@@ -45,10 +51,15 @@ public class GetPagesTest {
 		String server = commandLine.hasOption("h") ? commandLine.getOptionValue(serverOption) : "tcp://127.0.0.1:1883";
 		String username = commandLine.getOptionValue(usernameOption);
 		String password = commandLine.getOptionValue(passwordOption);
+		String operation = commandLine.getOptionValue(operationOption);
+		String A = commandLine.getOptionValue(param1Option);
+		String B = commandLine.getOptionValue(param2Option);
+
+		int param1 = Integer.parseInt(A);
+		int param2 = Integer.parseInt(B);
 
 		String clientID = "requester";
 		String requestTopic = "request";
-		int qos = 0;
 
 		MqttClientPersistence persistence = new MqttDefaultFilePersistence();
 		MqttAsyncClient client = new MqttAsyncClient(server, clientID, persistence);
@@ -57,9 +68,8 @@ public class GetPagesTest {
 		connOpts.setPassword(password.getBytes());
 
 		HandlerOptions handlerOptions = new HandlerOptions(client, "response/%s", clientID);
-		RemoteProcedureCall h = new RemoteProcedureCall(handlerOptions);
-
-		client.setCallback(h.getAdapter());
+		RemoteProcedureCall rpc = new RemoteProcedureCall(handlerOptions);
+		client.setCallback(rpc.getAdapter());
 
 		// Connect
 		System.out.printf("Connecting to broker: %s as '%s'\n", server, clientID);
@@ -67,15 +77,14 @@ public class GetPagesTest {
 		System.out.printf("Client %s connected\n", clientID);
 
 		// Subscribe to the responseTopic
-		h.subscribe();
+		rpc.subscribe();
 
-		RpcRequest handler = new GetPages();
+		RpcRequest handler = new Calculator(operation, param1, param2);
 		byte[] request = mapper.writeValueAsBytes(handler.getRequest());
-		PublishOptions publishOptions = new PublishOptions(requestTopic, request);
-		Token token = h.request(publishOptions);
+		Token token = rpc.request(new PublishOptions(requestTopic, request));
 
 		// Wait for the response to arrive
-		Map<String, Object> response = h.waitForResponse(token);
+		Map<String, Object> response = rpc.waitForResponse(token);
 		handler.handle(response);
 
 		// Disconnect

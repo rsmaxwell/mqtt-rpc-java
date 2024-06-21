@@ -1,14 +1,14 @@
-package com.rsmaxwell.diary.request.requests;
+package com.rsmaxwell.rpc.request.requests;
 
 import java.util.Map;
 
-import com.rsmaxwell.diary.utils.Request;
-import com.rsmaxwell.diary.utils.Utilities;
+import com.rsmaxwell.rpc.utils.Request;
+import com.rsmaxwell.rpc.utils.Utilities;
 
-public class Quit extends RpcRequest {
+public class GetPages extends RpcRequest {
 
-	public Quit() {
-		request = new Request("quit");
+	public GetPages() {
+		request = new Request("getPages");
 		setRequest(request);
 	}
 

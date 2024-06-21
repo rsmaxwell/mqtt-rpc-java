@@ -1,4 +1,4 @@
-package com.rsmaxwell.diary.response.handler;
+package com.rsmaxwell.rpc.response.handler;
 
 import java.util.Map;
 

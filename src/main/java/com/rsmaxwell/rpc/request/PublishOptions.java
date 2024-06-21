@@ -1,4 +1,4 @@
-package com.rsmaxwell.diary.request;
+package com.rsmaxwell.rpc.request;
 
 public class PublishOptions {
 

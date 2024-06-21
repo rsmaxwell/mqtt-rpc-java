@@ -1,4 +1,4 @@
-package com.rsmaxwell.diary;
+package com.rsmaxwell.rpc;
 
 import java.util.Map;
 
@@ -13,14 +13,14 @@ import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
 import org.eclipse.paho.mqttv5.client.persist.MqttDefaultFilePersistence;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rsmaxwell.diary.request.HandlerOptions;
-import com.rsmaxwell.diary.request.PublishOptions;
-import com.rsmaxwell.diary.request.RemoteProcedureCall;
-import com.rsmaxwell.diary.request.requests.Calculator;
-import com.rsmaxwell.diary.request.requests.RpcRequest;
-import com.rsmaxwell.diary.utils.Token;
+import com.rsmaxwell.rpc.request.HandlerOptions;
+import com.rsmaxwell.rpc.request.PublishOptions;
+import com.rsmaxwell.rpc.request.RemoteProcedureCall;
+import com.rsmaxwell.rpc.request.requests.Quit;
+import com.rsmaxwell.rpc.request.requests.RpcRequest;
+import com.rsmaxwell.rpc.utils.Token;
 
-public class CalculatorTest {
+public class QuitTest {
 
 	static int qos = 0;
 	static volatile boolean keepRunning = true;
@@ -32,18 +32,12 @@ public class CalculatorTest {
 		Option serverOption = createOption("s", "server", "mqtt server", "URL of MQTT server", false);
 		Option usernameOption = createOption("u", "username", "Username", "Username for the MQTT server", true);
 		Option passwordOption = createOption("p", "password", "Password", "Password for the MQTT server", true);
-		Option operationOption = createOption("o", "operation", "Operation", "Operation ( mul/add/sub/div )", true);
-		Option param1Option = createOption("a", "param1", "Param1", "Parameter 1", true);
-		Option param2Option = createOption("b", "param2", "Param2", "Parameter 2", true);
 
 		// @formatter:off
 		Options options = new Options();
 		options.addOption(serverOption)
 			   .addOption(usernameOption)
-			   .addOption(passwordOption)
-			   .addOption(operationOption)
-			   .addOption(param1Option)
-			   .addOption(param2Option);
+			   .addOption(passwordOption);
 		// @formatter:on
 
 		CommandLineParser commandLineParser = new DefaultParser();
@@ -51,16 +45,9 @@ public class CalculatorTest {
 		String server = commandLine.hasOption("h") ? commandLine.getOptionValue(serverOption) : "tcp://127.0.0.1:1883";
 		String username = commandLine.getOptionValue(usernameOption);
 		String password = commandLine.getOptionValue(passwordOption);
-		String operation = commandLine.getOptionValue(operationOption);
-		String A = commandLine.getOptionValue(param1Option);
-		String B = commandLine.getOptionValue(param2Option);
-
-		int param1 = Integer.parseInt(A);
-		int param2 = Integer.parseInt(B);
 
 		String clientID = "requester";
 		String requestTopic = "request";
-		int qos = 0;
 
 		MqttClientPersistence persistence = new MqttDefaultFilePersistence();
 		MqttAsyncClient client = new MqttAsyncClient(server, clientID, persistence);
@@ -70,6 +57,7 @@ public class CalculatorTest {
 
 		HandlerOptions handlerOptions = new HandlerOptions(client, "response/%s", clientID);
 		RemoteProcedureCall rpc = new RemoteProcedureCall(handlerOptions);
+
 		client.setCallback(rpc.getAdapter());
 
 		// Connect
@@ -80,9 +68,10 @@ public class CalculatorTest {
 		// Subscribe to the responseTopic
 		rpc.subscribe();
 
-		RpcRequest handler = new Calculator(operation, param1, param2);
+		RpcRequest handler = new Quit();
 		byte[] request = mapper.writeValueAsBytes(handler.getRequest());
-		Token token = rpc.request(new PublishOptions(requestTopic, request));
+		PublishOptions publishOptions = new PublishOptions(requestTopic, request);
+		Token token = rpc.request(publishOptions);
 
 		// Wait for the response to arrive
 		Map<String, Object> response = rpc.waitForResponse(token);

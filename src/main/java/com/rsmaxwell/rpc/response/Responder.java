@@ -1,7 +1,6 @@
-package com.rsmaxwell.diary.response;
+package com.rsmaxwell.rpc.response;
 
 import java.util.HashMap;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -14,10 +13,10 @@ import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
 import org.eclipse.paho.mqttv5.client.persist.MqttDefaultFilePersistence;
 import org.eclipse.paho.mqttv5.common.MqttSubscription;
 
-import com.rsmaxwell.diary.response.handler.Calculator;
-import com.rsmaxwell.diary.response.handler.GetPages;
-import com.rsmaxwell.diary.response.handler.Quit;
-import com.rsmaxwell.diary.response.handler.RequestHandler;
+import com.rsmaxwell.rpc.response.handler.Calculator;
+import com.rsmaxwell.rpc.response.handler.GetPages;
+import com.rsmaxwell.rpc.response.handler.Quit;
+import com.rsmaxwell.rpc.response.handler.RequestHandler;
 
 public class Responder {
 
@@ -26,8 +25,6 @@ public class Responder {
 	static String requestTopic = "request";
 
 	static int qos = 0;
-
-	static volatile boolean keepRunning = true;
 
 	static MessageHandler messageHandler;
 
@@ -81,9 +78,11 @@ public class Responder {
 		client_subscriber.subscribe(subscription).waitForCompletion();
 
 		// Wait till quit request received
-		while (keepRunning) {
-			TimeUnit.SECONDS.sleep(1);
-		}
+		messageHandler.waitForCompletion();
+
+		System.out.println("disconnect");
+		client_responder.disconnect().waitForCompletion();
+		client_subscriber.disconnect().waitForCompletion();
 
 		System.out.println("exiting");
 	}
