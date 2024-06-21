@@ -13,10 +13,10 @@ import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
 import org.eclipse.paho.mqttv5.client.persist.MqttDefaultFilePersistence;
 import org.eclipse.paho.mqttv5.common.MqttSubscription;
 
-import com.rsmaxwell.rpc.response.handler.Calculator;
-import com.rsmaxwell.rpc.response.handler.GetPages;
-import com.rsmaxwell.rpc.response.handler.Quit;
-import com.rsmaxwell.rpc.response.handler.RequestHandler;
+import com.rsmaxwell.rpc.response.handlers.Calculator;
+import com.rsmaxwell.rpc.response.handlers.GetPages;
+import com.rsmaxwell.rpc.response.handlers.Quit;
+import com.rsmaxwell.rpc.response.handlers.RequestHandler;
 
 public class Responder {
 

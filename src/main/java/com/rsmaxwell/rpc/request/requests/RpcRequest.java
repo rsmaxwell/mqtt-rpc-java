@@ -5,14 +5,13 @@ import java.util.Map;
 
 import org.eclipse.paho.mqttv5.common.MqttMessage;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rsmaxwell.rpc.utils.Request;
 import com.rsmaxwell.rpc.utils.Response;
 
 public abstract class RpcRequest {
 
-	Request request;
+	private Request request;
 
 	private ObjectMapper mapper = new ObjectMapper();
 
@@ -30,18 +29,16 @@ public abstract class RpcRequest {
 
 		System.out.printf("message %s, topic: %s, qos: %d\n", payload, topic, replyMessage.getQos());
 		System.out.printf("decoding message payload: %s\n", payload);
-		TypeReference<Map<String, Object>> typeRef = new TypeReference<Map<String, Object>>() {
-		};
 
-		Map<String, Object> reply = mapper.readValue(payload, typeRef);
+		Response reply = mapper.readValue(payload, Response.class);
 
 		if (reply == null) {
 			throw new Exception("discarding message because decoded message was null");
 		}
 
-		int code = Response.getIntegerFromMap("code", reply);
+		int code = reply.getInteger("code");
 		if (code != HttpURLConnection.HTTP_OK) {
-			String message = Response.getStringFromMap("message", reply);
+			String message = reply.getString("message");
 			if (message == null) {
 				throw new Exception(String.format("code: %d\n", code));
 			} else {

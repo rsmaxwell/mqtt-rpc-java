@@ -6,7 +6,7 @@ import com.rsmaxwell.rpc.utils.Response;
 public class Calculator extends RpcRequest {
 
 	public Calculator(String operation, int param1, int param2) {
-		request = new Request("calculator");
+		Request request = new Request("calculator");
 		request.put("operation", operation);
 		request.put("param1", param1);
 		request.put("param2", param2);
@@ -15,7 +15,7 @@ public class Calculator extends RpcRequest {
 
 	@Override
 	public void handle(Response response) throws Exception {
-		int result = Response.getIntegerFromMap("result", response);
+		int result = response.getInteger("result");
 		System.out.printf("result: %d\n", result);
 	}
 }

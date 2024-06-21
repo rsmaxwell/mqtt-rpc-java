@@ -8,7 +8,7 @@ import org.eclipse.paho.mqttv5.common.MqttMessage;
 import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rsmaxwell.rpc.response.handler.RequestHandler;
+import com.rsmaxwell.rpc.response.handlers.RequestHandler;
 import com.rsmaxwell.rpc.utils.Adapter;
 import com.rsmaxwell.rpc.utils.Request;
 import com.rsmaxwell.rpc.utils.Response;
@@ -130,15 +130,14 @@ public class MessageHandler extends Adapter implements MqttCallback {
 			MqttMessage responseMessage = new MqttMessage(response);
 			responseMessage.setProperties(responseProperties);
 			responseMessage.setQos(qos);
-			responseMessage.setRetained(false);
 
 			System.out.printf(String.format("Publishing: %s to topic: %s with qos: %d\n", new String(response), responseTopic, qos));
 			client.publish(responseTopic, responseMessage).waitForCompletion();
 			System.out.println(String.format("publish complete"));
 
-			boolean found = Response.isPresent("keepRunning", result);
+			boolean found = result.containsKey("keepRunning");
 			if (found) {
-				boolean value = Response.getBooleanFromMap("keepRunning", result);
+				Boolean value = result.getBoolean("keepRunning");
 				if (value == false) {
 					System.out.println("quitting");
 					keepRunning.completed();

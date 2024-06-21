@@ -6,7 +6,7 @@ import com.rsmaxwell.rpc.utils.Response;
 public class Quit extends RpcRequest {
 
 	public Quit() {
-		request = new Request("quit");
+		Request request = new Request("quit");
 		setRequest(request);
 	}
 

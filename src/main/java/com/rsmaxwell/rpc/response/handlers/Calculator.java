@@ -1,8 +1,9 @@
-package com.rsmaxwell.rpc.response.handler;
+package com.rsmaxwell.rpc.response.handlers;
 
 import java.util.Map;
 
 import com.rsmaxwell.rpc.utils.Response;
+import com.rsmaxwell.rpc.utils.Utilities;
 
 public class Calculator extends RequestHandler {
 
@@ -11,9 +12,9 @@ public class Calculator extends RequestHandler {
 		System.out.println("calculator.handleRequest");
 
 		try {
-			String operation = Response.getStringFromMap("operation", args);
-			int param1 = Response.getIntegerFromMap("param1", args);
-			int param2 = Response.getIntegerFromMap("param2", args);
+			String operation = Utilities.getString(args, "operation");
+			int param1 = Utilities.getInteger(args, "param1");
+			int param2 = Utilities.getInteger(args, "param2");
 
 			int value = 0;
 

@@ -1,4 +1,4 @@
-package com.rsmaxwell.rpc.response.handler;
+package com.rsmaxwell.rpc.response.handlers;
 
 import java.net.HttpURLConnection;
 import java.util.Map;

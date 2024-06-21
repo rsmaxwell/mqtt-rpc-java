@@ -11,8 +11,6 @@ import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
 import org.eclipse.paho.mqttv5.client.persist.MqttDefaultFilePersistence;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rsmaxwell.rpc.request.HandlerOptions;
-import com.rsmaxwell.rpc.request.PublishOptions;
 import com.rsmaxwell.rpc.request.RemoteProcedureCall;
 import com.rsmaxwell.rpc.request.requests.Quit;
 import com.rsmaxwell.rpc.request.requests.RpcRequest;
@@ -54,9 +52,7 @@ public class QuitTest {
 		connOpts.setUserName(username);
 		connOpts.setPassword(password.getBytes());
 
-		HandlerOptions handlerOptions = new HandlerOptions(client, "response/%s", clientID);
-		RemoteProcedureCall rpc = new RemoteProcedureCall(handlerOptions);
-
+		RemoteProcedureCall rpc = new RemoteProcedureCall(client, String.format("response/%s", clientID));
 		client.setCallback(rpc.getAdapter());
 
 		// Connect
@@ -69,8 +65,7 @@ public class QuitTest {
 
 		RpcRequest handler = new Quit();
 		byte[] request = mapper.writeValueAsBytes(handler.getRequest());
-		PublishOptions publishOptions = new PublishOptions(requestTopic, request);
-		Token token = rpc.request(publishOptions);
+		Token token = rpc.request(requestTopic, request);
 
 		// Wait for the response to arrive
 		Response response = rpc.waitForResponse(token);

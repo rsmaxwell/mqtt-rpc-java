@@ -2,6 +2,7 @@ package com.rsmaxwell.rpc.request;
 
 import java.util.WeakHashMap;
 
+import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
 import org.eclipse.paho.mqttv5.client.MqttCallback;
 import org.eclipse.paho.mqttv5.common.MqttException;
 import org.eclipse.paho.mqttv5.common.MqttMessage;
@@ -21,36 +22,36 @@ public class RemoteProcedureCall {
 	static WeakHashMap<String, Token> tokens = new WeakHashMap<>();
 	static private ObjectMapper mapper = new ObjectMapper();
 
-	private HandlerOptions options;
+	private MqttAsyncClient client;
+	private String responseTopic;
 
-	public RemoteProcedureCall(HandlerOptions options) throws MqttException {
-		this.options = options;
+	public RemoteProcedureCall(MqttAsyncClient client, String responseTopic) throws MqttException {
+		this.client = client;
+		this.responseTopic = responseTopic;
 	}
 
 	// Subscribe to the response topic
 	public void subscribe() throws Exception {
-		String responseTopic = String.format(options.responseTopicFormat, options.clientID);
 		MqttSubscription subscription = new MqttSubscription(responseTopic);
 		System.out.printf("subscribing to: %s\n", responseTopic);
-		options.client.subscribe(subscription).waitForCompletion();
+		client.subscribe(subscription).waitForCompletion();
 	}
 
-	public Token request(PublishOptions publishOptions) throws Exception {
+	public Token request(String topic, byte[] request) throws Exception {
 
 		Token token = new Token();
 		String correlID = token.getID();
 
-		MqttMessage message = new MqttMessage(publishOptions.request);
+		MqttMessage message = new MqttMessage(request);
 		MqttProperties properties = new MqttProperties();
-		properties.setResponseTopic(options.responseTopicFormat);
+		properties.setResponseTopic(responseTopic);
 		properties.setCorrelationData(correlID.getBytes());
 		message.setProperties(properties);
 		message.setQos(qos);
-		message.setRetained(false);
 
-		System.out.printf(String.format("Publishing: %s to topic: %s with qos: %d\n", new String(publishOptions.request), publishOptions.topic, qos));
-		System.out.printf(String.format("    replyTopic: %s\n", options.responseTopicFormat));
-		options.client.publish(publishOptions.topic, message).waitForCompletion();
+		System.out.printf(String.format("Publishing: %s to topic: %s with qos: %d\n", new String(request), topic, qos));
+		System.out.printf(String.format("    replyTopic: %s\n", responseTopic));
+		client.publish(topic, message).waitForCompletion();
 		System.out.println("Message published");
 
 		tokens.put(correlID, token);

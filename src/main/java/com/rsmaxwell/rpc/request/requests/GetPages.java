@@ -6,13 +6,13 @@ import com.rsmaxwell.rpc.utils.Response;
 public class GetPages extends RpcRequest {
 
 	public GetPages() {
-		request = new Request("getPages");
+		Request request = new Request("getPages");
 		setRequest(request);
 	}
 
 	@Override
 	public void handle(Response response) throws Exception {
-		String result = Response.getStringFromMap("result", response);
+		String result = response.getString("result");
 		System.out.printf("result: %s\n", result);
 	}
 }
